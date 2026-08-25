@@ -10,12 +10,11 @@
 
 set -eu
 
-# An explicit https:// source, NOT the `owner/repo` shorthand. Claude Code clones
-# the shorthand over SSH by default, and it suppresses the interactive host-key
-# and passphrase prompts — so anyone authenticated to GitHub over HTTPS only
-# (`gh auth login`, Credential Manager, Keychain) gets a hard
-# "Permission denied (publickey)" on a public repository that needs no
-# credentials at all.
+# An explicit https:// source, NOT the `owner/repo` shorthand. Current Claude
+# Code probes SSH for the shorthand and falls back to HTTPS when it is not
+# configured, so the shorthand usually resolves — but that fallback is a
+# behaviour of the CLI, not of this script, and it has not always been there.
+# The URL form clones over HTTPS on every version, which is the point.
 REPO="${CONTEXT_VITALS_REPO:-https://github.com/briansmith80/context-vitals}"
 MARKETPLACE="context-vitals-marketplace"
 PLUGIN="context-vitals"
@@ -90,10 +89,10 @@ if [ -n "$BEFORE" ]; then
   claude plugin marketplace update "$MARKETPLACE"
 
   say "Updating ${PLUGIN} (scope: ${SCOPE}) ..."
-  claude plugin update "${PLUGIN}@${MARKETPLACE}" --scope "$SCOPE" --yes
+  claude plugin update "${PLUGIN}@${MARKETPLACE}" --scope "$SCOPE"
 else
   say "Installing ${PLUGIN} (scope: ${SCOPE}) ..."
-  claude plugin install "${PLUGIN}@${MARKETPLACE}" --scope "$SCOPE" --yes
+  claude plugin install "${PLUGIN}@${MARKETPLACE}" --scope "$SCOPE"
 fi
 
 AFTER=$(plugin_field version)

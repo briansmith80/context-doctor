@@ -29,6 +29,7 @@ Each of these exists because it broke once. Do not work around one; fix the caus
 | `install.sh` is LF, `install.ps1` is CRLF | A CRLF `install.sh` dies with `bad interpreter: /usr/bin/env sh^M` when piped to a shell — which is exactly how the README serves it. |
 | `install.sh` is POSIX `sh` and shellcheck-clean | It is piped into `sh`, not bash. No `[[`, no `readlink -f`, no `sed -i`. |
 | `install.ps1` parses under Windows PowerShell 5.1 | 5.1 strips inner quotes from a native command's arguments. That shipped once and broke every Windows install. |
+| No fenced install command chains two `claude` commands with `;`, and `marketplace add` never gets `--yes` | `cmd.exe` does not split on `;`. It merges the pair into one `marketplace add` carrying the other's flags, which exits 1 on `unknown option '--yes'` having installed nothing — and the message names neither the cause nor the command. That shipped. `--yes` is inert here anyway: it only answers the prompt for a marketplace that installs by running a command. `npm run lint:install`. |
 | Test names are ASCII | Test names are machine-consumed by TAP readers. |
 | The report never exceeds 72 rendered columns | Column arithmetic is done in *rendered* width, not `String.length`: `⛔` has length 1 and renders 2. |
 | `showcase.jsonl` is byte-reproducible from `make-fixture.js` | The README's sample output is a real capture. A hand-edited sample drifts from the renderer and then misrepresents a measurement tool. |

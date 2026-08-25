@@ -93,11 +93,22 @@ graded by source quality, is in
 ## Install
 
 ```bash
-claude plugin marketplace add https://github.com/briansmith80/context-vitals; claude plugin install context-vitals@context-vitals-marketplace --yes
+claude plugin marketplace add https://github.com/briansmith80/context-vitals
+claude plugin install context-vitals@context-vitals-marketplace
 ```
+
+Two lines, deliberately: `;` separates commands in bash, zsh and PowerShell, but
+**not** in `cmd.exe`, which merges them into one and fails on an error that names
+neither. Run them one at a time and any failure names the command that caused it.
 
 Restart Claude Code, or run `/reload-plugins`, to activate the hooks. Needs
 Claude Code and `node` 20+ on `PATH`. No `npm install`.
+
+Confirm it took — the status must read `enabled`, not just installed:
+
+```bash
+claude plugin list
+```
 
 To update later:
 
@@ -105,7 +116,8 @@ To update later:
 claude plugin update context-vitals@context-vitals-marketplace
 ```
 
-Or turn on auto-update for the marketplace in `/plugin`.
+An update applies on the next restart, not to the running session. Or turn on
+auto-update for the marketplace in `/plugin`.
 
 <details>
 <summary><strong>Other ways to install</strong></summary>
@@ -128,20 +140,21 @@ curl -fsSL https://raw.githubusercontent.com/briansmith80/context-vitals/main/in
 irm https://raw.githubusercontent.com/briansmith80/context-vitals/main/install.ps1 | iex
 ```
 
-Both scripts are short and do nothing the one-liner does not. Read them before
-you pipe them into a shell.
+Both scripts run the same two `claude` commands as above; what they add is the
+preflight and the update-in-place branch, nothing else. Read them before you pipe
+them into a shell.
 
 Use the full `https://` URL rather than the `briansmith80/context-vitals`
-shorthand — the shorthand clones over SSH, which fails on an HTTPS-only setup.
-And `;` chains in bash, zsh and PowerShell alike where `&&` is a parser error in
-Windows PowerShell 5.1, so if you see two errors, fix the first one.
+shorthand. Current Claude Code probes SSH and falls back to HTTPS for the
+shorthand, so it usually works — but the URL form does not depend on that
+fallback, and it is what the marketplace records either way.
 
 </details>
 
 <details>
 <summary><strong>Why re-running the install command does nothing</strong></summary>
 
-The install one-liner is not an update path: `claude plugin install` prints
+The install command is not an update path: `claude plugin install` prints
 `already installed` and changes nothing. Use `claude plugin update`.
 
 Updates are keyed on the `version` in `plugin.json`, and the cache keeps one
@@ -248,9 +261,21 @@ for your model. For an installed plugin the file is:
 ~/.claude/plugins/data/context-vitals-context-vitals-marketplace/config.json
 ```
 
-Running uninstalled via `claude --plugin-dir` gives no plugin data directory, so
-the fallback is `~/.claude/context-vitals/config.json`. The `METHOD` block in
-`/context-check` tells you which one is in play.
+Claude Code hands the hooks that directory in `CLAUDE_PLUGIN_DATA`, and derives
+its name from the plugin's source. Under `claude --plugin-dir` the source is the
+`@inline` sentinel rather than a marketplace, so the directory is still there —
+it is just named for that instead:
+
+```text
+~/.claude/plugins/data/context-vitals-inline/config.json
+```
+
+The `~/.claude/context-vitals/config.json` fallback is for neither case. It
+applies only when `CLAUDE_PLUGIN_DATA` is absent — running
+`context-report.js` by hand, with no `--data-dir`. If you edited a config and
+nothing changed, you almost certainly wrote to a different one of these three
+than the hooks read; `claude plugin list` tells you whether the plugin is
+installed or inline.
 
 ```json
 {
@@ -277,6 +302,10 @@ session on the machine, not just one project:
 claude plugin uninstall context-vitals@context-vitals-marketplace
 ```
 
+Uninstalling deletes the plugin data directory with it — your `config.json`,
+every session state file, and every compaction snapshot. Copy `config.json` out
+first if you intend to reinstall.
+
 Nothing grows without bound: `sessions/` keeps the newest 50 state files, pruned
 on the first turn of a new session, and `compactions/` the newest 30 snapshots,
 pruned before writing a new one.
@@ -284,6 +313,8 @@ pruned before writing a new one.
 <details>
 <summary><strong>If it isn't working</strong></summary>
 
+- **The install said `unknown option '--yes'`, or nothing installed.** You ran the two install commands joined by `;` on one line in `cmd.exe`, which does not treat `;` as a separator — both commands merge into one `marketplace add`, and it rejects the trailing flag. Nothing is installed, not even the marketplace. Run the two lines separately, and drop any `--yes`: this plugin never needs it, because `--yes` only answers the prompt for a marketplace that installs by running a command.
+- **`claude plugin list` shows it installed but not `enabled`.** Enable it with `claude plugin enable context-vitals@context-vitals-marketplace`, or in `/plugin`. Installing at a scope you are not in has the same look — the default is user scope, so check the `Scope:` line.
 - **Nothing appeared after a turn.** Restart Claude Code or run `/reload-plugins`; hooks load at session start. Check `quiet` and `minZone` too — below `minZone` there is deliberately no output.
 - **`/context-check` says "no reading available".** It could not find your transcript, or no assistant turn has happened yet. Pass `--session <id>` or `--transcript <path>` to pin it. A broken `config.json` is the next likeliest cause, and the `METHOD` block names what it rejected.
 - **`claude plugin update` says "already at the latest version".** The published version has not moved. `claude plugin list` shows what you are running.

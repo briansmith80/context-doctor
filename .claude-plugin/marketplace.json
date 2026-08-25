@@ -1,5 +1,5 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "context-vitals-marketplace",
   "description": "Context window hygiene tooling for Claude Code",
   "owner": {

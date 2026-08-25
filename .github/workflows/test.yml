@@ -85,6 +85,13 @@ jobs:
             echo "ok $f"
           done
 
+      - name: Install commands survive a paste into any shell
+        # cmd.exe does not split on `;`, so two `claude` commands joined on one
+        # line merge into one `marketplace add` carrying the other's flags. That
+        # shipped: users got `unknown option '--yes'` and an empty install, with
+        # nothing in the message pointing at the cause.
+        run: npm run lint:install
+
       - name: Manifests agree and the shipping version is documented
         # Both halves of one invariant, so they fail together: the two manifests
         # must carry the same version, and that version must have a CHANGELOG

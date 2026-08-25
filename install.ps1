@@ -9,10 +9,11 @@
 
 $ErrorActionPreference = 'Stop'
 
-# An explicit https:// source, NOT the `owner/repo` shorthand. Claude Code clones
-# the shorthand over SSH by default and suppresses the interactive host-key and
-# passphrase prompts, so an HTTPS-only GitHub setup — the common one on Windows —
-# fails with "Permission denied (publickey)" on a public repo.
+# An explicit https:// source, NOT the `owner/repo` shorthand. Current Claude
+# Code probes SSH for the shorthand and falls back to HTTPS when it is not
+# configured, so the shorthand usually resolves — but that fallback is a
+# behaviour of the CLI, not of this script, and it has not always been there.
+# The URL form clones over HTTPS on every version, which is the point.
 $Repo        = if ($env:CONTEXT_VITALS_REPO)  { $env:CONTEXT_VITALS_REPO }  else { 'https://github.com/briansmith80/context-vitals' }
 $Scope       = if ($env:CONTEXT_VITALS_SCOPE) { $env:CONTEXT_VITALS_SCOPE } else { 'user' }
 $Marketplace = 'context-vitals-marketplace'
@@ -95,11 +96,11 @@ if ($before) {
   if ($LASTEXITCODE -ne 0) { Fail "marketplace update failed" }
 
   Write-Host "Updating $Plugin (scope: $Scope) ..."
-  claude plugin update "$Plugin@$Marketplace" --scope $Scope --yes
+  claude plugin update "$Plugin@$Marketplace" --scope $Scope
   if ($LASTEXITCODE -ne 0) { Fail "plugin update failed" }
 } else {
   Write-Host "Installing $Plugin (scope: $Scope) ..."
-  claude plugin install "$Plugin@$Marketplace" --scope $Scope --yes
+  claude plugin install "$Plugin@$Marketplace" --scope $Scope
   if ($LASTEXITCODE -ne 0) { Fail "plugin install failed" }
 }
 

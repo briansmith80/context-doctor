@@ -12,6 +12,7 @@
     "test": "node --test plugins/context-vitals/test/context.test.js plugins/context-vitals/test/detection.test.js plugins/context-vitals/test/scripts.test.js",
     "report": "node plugins/context-vitals/scripts/context-report.js",
     "bump": "node scripts/bump-version.js",
-    "release:check": "node scripts/bump-version.js --check"
+    "release:check": "node scripts/bump-version.js --check",
+    "lint:install": "node scripts/check-install-commands.js"
   }
 }
